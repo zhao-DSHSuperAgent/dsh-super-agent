@@ -1,0 +1,479 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BMI 计算器</title>
+<style>
+  :root {
+    --bg-1: #eef2ff;
+    --bg-2: #fdf2f8;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+    --line: #e2e8f0;
+    --brand: #4f46e5;
+    --brand-soft: #eef2ff;
+    --under: #38bdf8;
+    --normal: #22c55e;
+    --over: #f59e0b;
+    --obese: #ef4444;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: var(--text);
+    background: radial-gradient(1200px 600px at 10% -10%, var(--bg-1), transparent),
+                radial-gradient(900px 600px at 100% 110%, var(--bg-2), transparent),
+                #f8fafc;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: 0 20px 50px -20px rgba(30, 41, 59, .35), 0 0 0 1px rgba(226, 232, 240, .8);
+    overflow: hidden;
+  }
+
+  header {
+    padding: 26px 28px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    letter-spacing: .02em;
+  }
+
+  header p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .body { padding: 22px 28px 28px; }
+
+  .field { margin-bottom: 18px; }
+
+  .field > .label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .label small { font-weight: 400; color: var(--muted); }
+
+  .input-wrap {
+    display: flex;
+    align-items: stretch;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    transition: border-color .15s, box-shadow .15s;
+  }
+
+  .input-wrap:focus-within {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, .12);
+  }
+
+  .input-wrap.invalid { border-color: var(--obese); }
+
+  .input-wrap input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    padding: 13px 14px;
+    font-size: 17px;
+    font-variant-numeric: tabular-nums;
+    background: transparent;
+    color: inherit;
+    border-radius: 12px 0 0 12px;
+  }
+
+  .input-wrap input::-webkit-outer-spin-button,
+  .input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  .input-wrap .unit {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 14px;
+    color: var(--muted);
+    background: #f8fafc;
+    border-left: 1px solid var(--line);
+    border-radius: 0 11px 11px 0;
+  }
+
+  .error {
+    display: none;
+    margin-top: 7px;
+    font-size: 12.5px;
+    color: var(--obese);
+  }
+
+  .form-error { display: none; margin-top: 4px; }
+
+  .actions { display: flex; gap: 10px; margin: 22px 0 6px; }
+
+  button {
+    font: inherit;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform .08s, background .15s, color .15s, border-color .15s;
+  }
+
+  button:active { transform: translateY(1px); }
+
+  .btn-primary {
+    flex: 1;
+    padding: 13px 18px;
+    border: 0;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 10px 20px -12px rgba(79, 70, 229, .9);
+  }
+
+  .btn-primary:hover { background: linear-gradient(135deg, #4f46e5, #4338ca); }
+
+  .btn-ghost {
+    padding: 13px 18px;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  .btn-ghost:hover { border-color: #cbd5e1; color: var(--text); }
+
+  .result {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    display: none;
+  }
+
+  .result.show { display: block; }
+
+  .result-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .bmi-value {
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+  }
+
+  .bmi-value small { font-size: 14px; font-weight: 500; color: var(--muted); margin-left: 6px; }
+
+  .badge {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--normal);
+    white-space: nowrap;
+  }
+
+  .result-note {
+    margin: 10px 0 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .meter { position: relative; margin-top: 10px; }
+
+  .meter-bar {
+    display: flex;
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .meter-bar span:nth-child(1) { flex: 18.5; background: var(--under); }
+  .meter-bar span:nth-child(2) { flex: 5.5;  background: var(--normal); }
+  .meter-bar span:nth-child(3) { flex: 5;    background: var(--over); }
+  .meter-bar span:nth-child(4) { flex: 11;   background: var(--obese); }
+
+  .meter-pin {
+    position: absolute;
+    top: -5px;
+    width: 4px;
+    height: 20px;
+    margin-left: -2px;
+    border-radius: 2px;
+    background: #0f172a;
+    box-shadow: 0 0 0 2px #fff;
+    transition: left .35s cubic-bezier(.4, 0, .2, 1);
+    left: 0;
+  }
+
+  .meter-labels {
+    position: relative;
+    height: 18px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .meter-labels span { position: absolute; transform: translateX(-50%); }
+
+  .ideal {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .ideal b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+  footer {
+    padding: 14px 28px 20px;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--muted);
+    background: #fcfcfd;
+    border-top: 1px solid var(--line);
+  }
+
+  @media (max-width: 420px) {
+    header, .body, footer { padding-left: 18px; padding-right: 18px; }
+    .bmi-value { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+  <main class="card">
+    <header>
+      <h1>BMI 计算器</h1>
+      <p>输入身高与体重，按中国成人标准（WS/T 428-2013）评估体重状况</p>
+    </header>
+
+    <div class="body">
+      <form id="bmi-form" novalidate>
+        <div class="field">
+          <label class="label" for="height">
+            <span>身高</span><small>cm</small>
+          </label>
+          <div class="input-wrap" id="height-wrap">
+            <input id="height" name="height" type="number" inputmode="decimal"
+                   step="0.1" min="50" max="260" placeholder="例如 170" autocomplete="off" />
+            <span class="unit">cm</span>
+          </div>
+          <div class="error" id="height-error"></div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="weight">
+            <span>体重</span><small>kg</small>
+          </label>
+          <div class="input-wrap" id="weight-wrap">
+            <input id="weight" name="weight" type="number" inputmode="decimal"
+                   step="0.1" min="10" max="400" placeholder="例如 65" autocomplete="off" />
+            <span class="unit">kg</span>
+          </div>
+          <div class="error" id="weight-error"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-primary" type="submit">计算 BMI</button>
+          <button class="btn-ghost" type="reset">重置</button>
+        </div>
+      </form>
+
+      <section class="result" id="result" aria-live="polite">
+        <div class="result-top">
+          <div class="bmi-value"><span id="bmi-value">0.0</span><small>kg/m²</small></div>
+          <div class="badge" id="bmi-badge">正常</div>
+        </div>
+        <p class="result-note" id="bmi-note"></p>
+
+        <div class="meter">
+          <div class="meter-bar">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="meter-pin" id="meter-pin"></div>
+          <div class="meter-labels">
+            <span style="left:0;transform:none">偏瘦</span>
+            <span style="left:35%">正常</span>
+            <span style="left:51%">超重</span>
+            <span style="left:66%">肥胖</span>
+            <span style="left:100%;transform:translateX(-100%)">≥40</span>
+          </div>
+        </div>
+
+        <div class="ideal" id="ideal"></div>
+      </section>
+    </div>
+
+    <footer>
+      参考标准：WS/T 428-2013《成人体重判定》—— 偏瘦 &lt; 18.5，正常 18.5–23.9，超重 24.0–27.9，肥胖 ≥ 28.0。
+      BMI 为人群筛查指标，肌肉量、孕期、儿童及老年人等情况需另行评估，结果仅供参考，不能替代医生诊断。
+    </footer>
+  </main>
+
+<script>
+(function () {
+  "use strict";
+
+  var CATEGORIES = [
+    { key: "under",   label: "偏瘦",  max: 18.5, color: "#38bdf8", advice: "体重偏低，建议均衡饮食、适当增加营养与力量训练。" },
+    { key: "normal",  label: "正常",  max: 24.0, color: "#22c55e", advice: "体重在健康范围内，继续保持规律饮食与运动。" },
+    { key: "over",    label: "超重",  max: 28.0, color: "#f59e0b", advice: "体重偏高，建议控制总热量摄入，增加有氧运动。" },
+    { key: "obese",   label: "肥胖",  max: Infinity, color: "#ef4444", advice: "体重明显偏高，建议在医生或营养师指导下减重。" }
+  ];
+
+  var form = document.getElementById("bmi-form");
+  var heightEl = document.getElementById("height");
+  var weightEl = document.getElementById("weight");
+  var resultEl = document.getElementById("result");
+  var valueEl = document.getElementById("bmi-value");
+  var badgeEl = document.getElementById("bmi-badge");
+  var noteEl = document.getElementById("bmi-note");
+  var idealEl = document.getElementById("ideal");
+  var pinEl = document.getElementById("meter-pin");
+
+  function classify(bmi) {
+    for (var i = 0; i < CATEGORIES.length; i++) {
+      if (bmi < CATEGORIES[i].max) return CATEGORIES[i];
+    }
+    return CATEGORIES[CATEGORIES.length - 1];
+  }
+
+  function setError(input, wrapId, errId, message) {
+    var wrap = document.getElementById(wrapId);
+    var err = document.getElementById(errId);
+    if (message) {
+      wrap.classList.add("invalid");
+      err.textContent = message;
+      err.style.display = "block";
+      input.setAttribute("aria-invalid", "true");
+    } else {
+      wrap.classList.remove("invalid");
+      err.textContent = "";
+      err.style.display = "none";
+      input.removeAttribute("aria-invalid");
+    }
+  }
+
+  function readNumber(el) {
+    var raw = String(el.value).trim().replace(",", ".");
+    if (raw === "") return { ok: false, empty: true, value: NaN };
+    var n = Number(raw);
+    if (!isFinite(n)) return { ok: false, empty: false, value: NaN };
+    return { ok: true, value: n };
+  }
+
+  function validate() {
+    var problems = 0;
+    var h = readNumber(heightEl);
+    var w = readNumber(weightEl);
+
+    if (!h.ok) {
+      setError(heightEl, "height-wrap", "height-error", h.empty ? "请输入身高" : "请输入有效的数字");
+      problems++;
+    } else if (h.value < 50 || h.value > 260) {
+      setError(heightEl, "height-wrap", "height-error", "身高应在 50 ~ 260 cm 之间");
+      problems++;
+    } else {
+      setError(heightEl, "height-wrap", "height-error", "");
+    }
+
+    if (!w.ok) {
+      setError(weightEl, "weight-wrap", "weight-error", w.empty ? "请输入体重" : "请输入有效的数字");
+      problems++;
+    } else if (w.value < 10 || w.value > 400) {
+      setError(weightEl, "weight-wrap", "weight-error", "体重应在 10 ~ 400 kg 之间");
+      problems++;
+    } else {
+      setError(weightEl, "weight-wrap", "weight-error", "");
+    }
+
+    if (problems) return null;
+    return { heightCm: h.value, weightKg: w.value };
+  }
+
+  function render(bmi, heightCm, weightKg) {
+    var cat = classify(bmi);
+    valueEl.textContent = bmi.toFixed(1);
+    badgeEl.textContent = cat.label;
+    badgeEl.style.background = cat.color;
+    noteEl.textContent = cat.advice;
+
+    // 体重计刻度：0 ~ 40 区间映射到 0 ~ 100%
+    var pct = Math.max(0, Math.min(100, (bmi / 40) * 100));
+    pinEl.style.left = pct + "%";
+    pinEl.title = "BMI " + bmi.toFixed(1);
+
+    var minWeight = 18.5 * Math.pow(heightCm / 100, 2);
+    var maxWeight = 24.0 * Math.pow(heightCm / 100, 2);
+    idealEl.innerHTML =
+      "按你的身高，健康体重范围约为 <b>" + minWeight.toFixed(1) + " ~ " + maxWeight.toFixed(1) + " kg</b>" +
+      "（当前 " + weightKg.toFixed(1) + " kg）";
+
+    resultEl.classList.add("show");
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var data = validate();
+    if (!data) {
+      resultEl.classList.remove("show");
+      return;
+    }
+    var meters = data.heightCm / 100;
+    var bmi = data.weightKg / (meters * meters);
+    render(bmi, data.heightCm, data.weightKg);
+  });
+
+  form.addEventListener("reset", function () {
+    setTimeout(function () {
+      setError(heightEl, "height-wrap", "height-error", "");
+      setError(weightEl, "weight-wrap", "weight-error", "");
+      resultEl.classList.remove("show");
+      heightEl.focus();
+    }, 0);
+  });
+
+  // 输入时即时清除错误提示
+  [heightEl, weightEl].forEach(function (el) {
+    el.addEventListener("input", function () {
+      if (el === heightEl) setError(el, "height-wrap", "height-error", "");
+      else setError(el, "weight-wrap", "weight-error", "");
+    });
+  });
+
+  heightEl.focus();
+})();
+</script>
+</body>
+</html>
